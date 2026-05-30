@@ -1,11 +1,16 @@
 {
   "expo": {
-    "name": "hooked-app",
+    "name": "Hooked",
     "slug": "hooked-app",
     "version": "1.0.0",
+    "scheme": "hooked",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    },
     "ios": {
       "supportsTablet": true
     },

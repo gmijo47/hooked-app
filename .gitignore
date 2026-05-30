@@ -28,6 +28,9 @@ yarn-error.*
 
 # macOS
 .DS_Store
+
+# Environment variables
+.env
 *.pem
 
 # local env files
@@ -39,3 +42,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+.claude/settings.json
+package-lock.json
+CLAUDE.md
+AGENTS.md
