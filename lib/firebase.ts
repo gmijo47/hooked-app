@@ -1,20 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, browserLocalPersistence, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Custom AsyncStorage persistence adapter for Firebase Auth SDK v12+
-// (getReactNativePersistence was removed from the public API)
-const asyncStoragePersistence = {
-  type: 'LOCAL' as const,
-  async _isAvailable() { return true; },
-  async _get(key: string) { return AsyncStorage.getItem(key); },
-  async _set(key: string, value: string) { await AsyncStorage.setItem(key, value); },
-  async _remove(key: string) { await AsyncStorage.removeItem(key); },
-  _addListener(_key: string, _listener: () => void) {},
-  _removeListener(_key: string, _listener: () => void) {},
-};
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -27,11 +15,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-export const auth = initializeAuth(app, {
-  persistence: Platform.OS === 'web'
-    ? browserLocalPersistence
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    : asyncStoragePersistence as any,
-});
+// Firebase Auth v12 on React Native expects a class-based persistence object,
+// so plain object adapters don't work. We use getAuth() which gives in-memory
+// persistence by default on non-web platforms => auth state won't survive
+// app restarts, but at least the app doesn't crash.
+// TODO: Switch to @react-native-firebase/auth for proper native persistence.
+export const auth = Platform.OS === 'web'
+  ? initializeAuth(app, { persistence: browserLocalPersistence })
+  : getAuth(app);
 
 export const db = getFirestore(app);
+export const storage = getStorage(app);
