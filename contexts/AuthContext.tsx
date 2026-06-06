@@ -33,11 +33,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
-        const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (snap.exists()) {
-          setProfile(snap.data() as UserProfile);
+        try {
+          const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (snap.exists()) {
+            setProfile(snap.data() as UserProfile);
+          } else {
+            setProfile(null);
+          }
+        } catch (e) {
+          console.error('Failed to fetch profile:', e);
+          setProfile(null);
         }
       } else {
         setUser(null);
@@ -50,8 +58,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = async () => {
     if (!user) return;
-    const snap = await getDoc(doc(db, 'users', user.uid));
-    if (snap.exists()) setProfile(snap.data() as UserProfile);
+    try {
+      const snap = await getDoc(doc(db, 'users', user.uid));
+      if (snap.exists()) setProfile(snap.data() as UserProfile);
+    } catch (e) {
+      console.error('Refresh profile error:', e);
+    }
   };
 
   const logout = async () => {

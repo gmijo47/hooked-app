@@ -5,6 +5,7 @@ import {
   ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Link } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -12,6 +13,7 @@ import { Colors, Spacing, Radius, FontSize } from '@/constants/colors';
 import HookedLogo from '@/components/HookedLogo';
 
 export default function RegisterScreen() {
+  const insets = useSafeAreaInsets();
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -74,10 +76,10 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: Math.max(insets.bottom, Spacing.xxl) }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.logoWrap}>

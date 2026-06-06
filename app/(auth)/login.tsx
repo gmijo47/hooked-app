@@ -1,20 +1,26 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, KeyboardAvoidingView, Platform,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Keyboard,
 } from 'react-native';
 import { Link } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Colors, Spacing, Radius, FontSize } from '@/constants/colors';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import HookedLogo from '@/components/HookedLogo';
 
 export default function LoginScreen() {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -43,10 +49,13 @@ export default function LoginScreen() {
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -100}
     >
       <ScrollView
-        contentContainerStyle={styles.container}
+        ref={scrollRef}
+        contentContainerStyle={[styles.container, { paddingBottom: Math.max(insets.bottom, Spacing.xxl) }]}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.logoWrap}>
           <HookedLogo size="lg" showTagline />
@@ -72,15 +81,34 @@ export default function LoginScreen() {
 
           <View style={styles.field}>
             <Text style={styles.label}>Lozinka</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="••••••••"
-              placeholderTextColor={Colors.textMuted}
-              secureTextEntry
-              autoComplete="password"
-            />
+            <View style={styles.passwordWrap}>
+              <TextInput
+                style={styles.passwordInput}
+                ref={passwordRef}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                placeholderTextColor={Colors.textMuted}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                autoComplete="off"
+                onFocus={() => {
+                  setTimeout(() => {
+                    scrollRef.current?.scrollToEnd({ animated: true });
+                  }, 250);
+                }}
+              />
+              <TouchableOpacity
+                style={styles.passwordToggle}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <MaterialCommunityIcons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={22}
+                  color={Colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -152,6 +180,25 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: FontSize.md,
     color: Colors.text,
+  },
+  passwordWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.input,
+    borderWidth: 1,
+    borderColor: Colors.inputBorder,
+    borderRadius: Radius.md,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 14,
+    fontSize: FontSize.md,
+    color: Colors.text,
+  },
+  passwordToggle: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 14,
   },
   error: {
     fontSize: FontSize.sm,
