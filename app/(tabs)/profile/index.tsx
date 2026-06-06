@@ -1,9 +1,11 @@
+import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { Colors, Spacing, Radius, FontSize } from '@/constants/colors';
+import { getCollection, Ascent, Favorite, whereClause, orderByClause } from '@/lib/firestore';
 
 const EXPERIENCE_LABELS: Record<string, string> = {
   never:  'Početnik/ca',
@@ -51,6 +53,34 @@ export default function ProfileScreen() {
   const { user, profile, logout } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [ascentCount, setAscentCount] = useState(0);
+  const [favCount, setFavCount] = useState(0);
+  const [totalLength, setTotalLength] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const [ascents, favs] = await Promise.all([
+          getCollection<Ascent>('ascents', [
+            whereClause('userId', '==', user.uid),
+          ]),
+          getCollection<Favorite>('favorites', [
+            whereClause('userId', '==', user.uid),
+          ]),
+        ]);
+        setAscentCount(ascents.length);
+        setFavCount(favs.length);
+        // Estimate total elevation from ascents (just count for now)
+        setTotalLength(ascents.length);
+      } catch (e) {
+        console.error('Failed to load stats:', e);
+      } finally {
+        setStatsLoading(false);
+      }
+    })();
+  }, [user]);
 
   const initials = (
     `${profile?.firstName?.[0] ?? ''}${profile?.lastName?.[0] ?? ''}`
@@ -93,6 +123,34 @@ export default function ProfileScreen() {
             {EXPERIENCE_LABELS[profile?.experience ?? ''] ?? 'Nedefinirano'}
           </Text>
         </View>
+      </View>
+
+      {/* Stats card — moved to top */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Tvoja statistika</Text>
+        {statsLoading ? (
+          <Text style={{ color: Colors.textMuted, fontSize: FontSize.sm }}>Učitavanje...</Text>
+        ) : (
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="lightning-bolt" size={24} color={Colors.orange} />
+              <Text style={styles.statNumber}>{ascentCount}</Text>
+              <Text style={styles.statLabel}>Uspona</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="heart" size={24} color="#FF4444" />
+              <Text style={styles.statNumber}>{favCount}</Text>
+              <Text style={styles.statLabel}>Favorita</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <MaterialCommunityIcons name="trophy" size={24} color="#FFD700" />
+              <Text style={styles.statNumber}>{totalLength}</Text>
+              <Text style={styles.statLabel}>Zabilježenih</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Info card */}
@@ -198,6 +256,32 @@ const styles = StyleSheet.create({
   infoText: { flex: 1 },
   infoLabel: { fontSize: FontSize.xs, color: Colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
   infoValue: { fontSize: FontSize.md, color: Colors.text, fontWeight: '600', marginTop: 1 },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  statItem: {
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.cardBorder,
+  },
+  statNumber: {
+    fontSize: FontSize.xl,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  statLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   editBtn: {
     flexDirection: 'row',
     alignItems: 'center',
