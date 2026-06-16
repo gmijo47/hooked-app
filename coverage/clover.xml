@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1781613341040" clover="3.2.0">
+  <project timestamp="1781613341040" name="All files">
+    <metrics statements="57" coveredstatements="51" conditionals="37" coveredconditionals="32" methods="17" coveredmethods="17" elements="111" coveredelements="100" complexity="0" loc="57" ncloc="57" packages="2" files="4" classes="4"/>
+    <package name="constants">
+      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <file name="colors.ts" path="/home/gmijo/Desktop/Fax/hooked-app/constants/colors.ts">
+        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="30" count="1" type="stmt"/>
+        <line num="39" count="1" type="stmt"/>
+        <line num="47" count="1" type="stmt"/>
+      </file>
+    </package>
+    <package name="lib">
+      <metrics statements="53" coveredstatements="47" conditionals="37" coveredconditionals="32" methods="17" coveredmethods="17"/>
+      <file name="firebase.ts" path="/home/gmijo/Desktop/Fax/hooked-app/lib/firebase.ts">
+        <metrics statements="5" coveredstatements="0" conditionals="2" coveredconditionals="0" methods="0" coveredmethods="0"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="23" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="27" count="0" type="stmt"/>
+        <line num="28" count="0" type="stmt"/>
+      </file>
+      <file name="firestore.ts" path="/home/gmijo/Desktop/Fax/hooked-app/lib/firestore.ts">
+        <metrics statements="16" coveredstatements="16" conditionals="5" coveredconditionals="5" methods="10" coveredmethods="10"/>
+        <line num="94" count="2" type="stmt"/>
+        <line num="95" count="2" type="stmt"/>
+        <line num="96" count="2" type="stmt"/>
+        <line num="103" count="2" type="stmt"/>
+        <line num="104" count="2" type="stmt"/>
+        <line num="105" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="106" count="1" type="stmt"/>
+        <line num="113" count="1" type="stmt"/>
+        <line num="114" count="1" type="stmt"/>
+        <line num="123" count="1" type="stmt"/>
+        <line num="131" count="1" type="stmt"/>
+        <line num="138" count="1" type="stmt"/>
+        <line num="148" count="1" type="stmt"/>
+        <line num="155" count="2" type="stmt"/>
+        <line num="159" count="1" type="stmt"/>
+        <line num="164" count="1" type="stmt"/>
+      </file>
+      <file name="utils.ts" path="/home/gmijo/Desktop/Fax/hooked-app/lib/utils.ts">
+        <metrics statements="32" coveredstatements="31" conditionals="30" coveredconditionals="27" methods="7" coveredmethods="7"/>
+        <line num="7" count="8" type="stmt"/>
+        <line num="8" count="8" type="stmt"/>
+        <line num="9" count="8" type="stmt"/>
+        <line num="11" count="8" type="stmt"/>
+        <line num="14" count="8" type="stmt"/>
+        <line num="18" count="32" type="stmt"/>
+        <line num="23" count="2" type="stmt"/>
+        <line num="32" count="34" type="cond" truecount="2" falsecount="0"/>
+        <line num="42" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="44" count="21" type="stmt"/>
+        <line num="45" count="21" type="cond" truecount="2" falsecount="0"/>
+        <line num="46" count="21" type="stmt"/>
+        <line num="47" count="21" type="stmt"/>
+        <line num="50" count="21" type="stmt"/>
+        <line num="53" count="21" type="stmt"/>
+        <line num="56" count="21" type="stmt"/>
+        <line num="59" count="21" type="stmt"/>
+        <line num="61" count="21" type="stmt"/>
+        <line num="65" count="21" type="cond" truecount="2" falsecount="0"/>
+        <line num="66" count="11" type="stmt"/>
+        <line num="67" count="11" type="cond" truecount="1" falsecount="1"/>
+        <line num="71" count="21" type="cond" truecount="2" falsecount="0"/>
+        <line num="72" count="10" type="cond" truecount="1" falsecount="1"/>
+        <line num="73" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="74" count="8" type="cond" truecount="3" falsecount="1"/>
+        <line num="75" count="0" type="stmt"/>
+        <line num="81" count="15" type="cond" truecount="2" falsecount="0"/>
+        <line num="82" count="13" type="stmt"/>
+        <line num="83" count="13" type="cond" truecount="2" falsecount="0"/>
+        <line num="84" count="12" type="cond" truecount="2" falsecount="0"/>
+        <line num="85" count="6" type="cond" truecount="4" falsecount="0"/>
+        <line num="86" count="2" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
