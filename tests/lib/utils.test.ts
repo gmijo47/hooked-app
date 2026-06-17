@@ -78,71 +78,65 @@ describe('getDiffWeight', () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// calculateScore
+// calculateScore (Sprint 4 — nova formula)
 // ──────────────────────────────────────────────────────────────────────────
 
 describe('calculateScore', () => {
   it('returns 0 for empty difficulty', () => {
-    expect(calculateScore('', 500, '300 m', '2 h')).toBe(0);
+    expect(calculateScore('', 300, 120, 120, 'manual')).toBe(0);
   });
 
-  it('base score = difficulty weight * 10', () => {
-    // 'A' weight = 1 → base = 10
-    expect(calculateScore('A', 0, undefined, undefined)).toBe(10);
-    // 'B' weight = 3 → base = 30
-    expect(calculateScore('B', 0, undefined, undefined)).toBe(30);
-    // 'D' weight = 13 → base = 130
-    expect(calculateScore('D', 0, undefined, undefined)).toBe(130);
-    // 'F' weight = 25 → base = 250
-    expect(calculateScore('F', 0, undefined, undefined)).toBe(250);
+  it('returns minimum 1 for valid input', () => {
+    // A difficulty, 0 height, very slow → should be at least 1
+    expect(calculateScore('A', 0, 120, 120, 'manual')).toBeGreaterThanOrEqual(1);
   });
 
-  it('adds length bonus: +0.02 per meter', () => {
-    // base 10 + 500m * 0.02 = 10 + 10 = 20
-    expect(calculateScore('A', 500, undefined, undefined)).toBe(20);
-    // base 30 + 1000m * 0.02 = 30 + 20 = 50
-    expect(calculateScore('B', 1000, undefined, undefined)).toBe(50);
+  it('GPS completion gives double score vs manual', () => {
+    const gpsScore = calculateScore('C', 350, 150, 180, 'gps');
+    const manualScore = calculateScore('C', 350, 150, 180, 'manual');
+    expect(gpsScore).toBeGreaterThan(manualScore);
   });
 
-  it('adds height bonus: +0.05 per meter', () => {
-    // base 10 + 300m * 0.05 = 10 + 15 = 25
-    expect(calculateScore('A', 0, '300 m', undefined)).toBe(25);
-    // base 30 + 500m * 0.05 = 30 + 25 = 55
-    expect(calculateScore('B', 0, '500 m', undefined)).toBe(55);
+  it('harder difficulty gives higher score', () => {
+    const easy = calculateScore('A', 200, 60, 60, 'manual');
+    const hard = calculateScore('F', 200, 60, 60, 'manual');
+    expect(hard).toBeGreaterThan(easy);
   });
 
-  it('parses height from string like "450 m"', () => {
-    expect(calculateScore('A', 0, '450 m visine', undefined)).toBe(
-      10 + Math.round(450 * 0.05),
-    );
+  it('higher height gives higher score', () => {
+    const low = calculateScore('C', 100, 120, 120, 'manual');
+    const high = calculateScore('C', 500, 120, 120, 'manual');
+    expect(high).toBeGreaterThan(low);
   });
 
-  it('adds duration bonus: +0.1 per minute', () => {
-    // base 10 + 90min * 0.1 = 10 + 9 = 19
-    expect(calculateScore('A', 0, undefined, '90 min')).toBe(19);
-    // base 30 + 2h * 0.1 = 30 + 120*0.1 = 42
-    expect(calculateScore('B', 0, undefined, '2 h')).toBe(42);
+  it('faster time gives higher score', () => {
+    const fast = calculateScore('C', 300, 120, 180, 'manual');
+    const slow = calculateScore('C', 300, 240, 180, 'manual');
+    expect(fast).toBeGreaterThan(slow);
   });
 
-  it('combines all parameters correctly', () => {
-    const score = calculateScore('C', 800, '350 m', '3 h');
-    // base = 7*10 = 70
-    // length = 800*0.02 = 16
-    // height = 350*0.05 = 17.5
-    // duration = 180*0.1 = 18
-    // total ≈ 121.5 → 122
-    expect(score).toBeGreaterThanOrEqual(121);
-    expect(score).toBeLessThanOrEqual(122);
+  it('matches sprint-4 spec example: C, 350m, 150min/180min, GPS', () => {
+    // diffWeight=7, heightFactor=1+1.75=2.75, timeFactor=1+(150/180)*0.3=1.25
+    // raw = 7*2.75/1.25*1.0 = 15.4 → 15
+    const score = calculateScore('C', 350, 150, 180, 'gps');
+    expect(score).toBe(15);
+  });
+
+  it('matches sprint-4 spec example: same but manual (×0.5)', () => {
+    const score = calculateScore('C', 350, 150, 180, 'manual');
+    expect(score).toBe(8);
+  });
+
+  it('matches sprint-4 spec example: F, 500m, 200min/240min, GPS', () => {
+    // diffWeight=25, heightFactor=1+2.5=3.5, timeFactor=1+(200/240)*0.3=1.25
+    // raw = 25*3.5/1.25*1.0 = 70
+    const score = calculateScore('F', 500, 200, 240, 'gps');
+    expect(score).toBe(70);
   });
 
   it('returns integer (Math.round)', () => {
-    const score = calculateScore('A', 333, '111 m', '55 min');
+    const score = calculateScore('C/D', 275, 133, 160, 'gps');
     expect(Number.isInteger(score)).toBe(true);
-  });
-
-  it('handles missing optional params gracefully', () => {
-    expect(calculateScore('A', 0, undefined, undefined)).toBe(10);
-    expect(calculateScore('C/D', 200, '', '')).toBeGreaterThan(0);
   });
 });
 

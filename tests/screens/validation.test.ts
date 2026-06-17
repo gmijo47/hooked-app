@@ -269,27 +269,27 @@ describe('Ascent form validation (activity/add.tsx)', () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// Score integration with ascent data
+// Score integration with ascent data (Sprint 4 formula)
 // ──────────────────────────────────────────────────────────────────────────
 
 describe('Ascent scoring integration', () => {
   it('calculates score from ferrata parameters', () => {
-    const score = calculateScore('C', 800, '350 m', '3 h');
+    const score = calculateScore('C', 350, 150, 180, 'gps');
     expect(score).toBeGreaterThan(0);
     expect(Number.isInteger(score)).toBe(true);
   });
 
   it('score increases with harder difficulty', () => {
-    const scoreA = calculateScore('A', 500, '300 m', '2 h');
-    const scoreC = calculateScore('C', 500, '300 m', '2 h');
-    const scoreF = calculateScore('F', 500, '300 m', '2 h');
+    const scoreA = calculateScore('A', 300, 120, 120, 'manual');
+    const scoreC = calculateScore('C', 300, 120, 120, 'manual');
+    const scoreF = calculateScore('F', 300, 120, 120, 'manual');
     expect(scoreC).toBeGreaterThan(scoreA);
     expect(scoreF).toBeGreaterThan(scoreC);
   });
 
-  it('score increases with longer length', () => {
-    const scoreShort = calculateScore('B', 200, '300 m', '2 h');
-    const scoreLong = calculateScore('B', 2000, '300 m', '2 h');
-    expect(scoreLong).toBeGreaterThan(scoreShort);
+  it('GPS completion bonus gives higher score', () => {
+    const gpsScore = calculateScore('B', 300, 120, 120, 'gps');
+    const manualScore = calculateScore('B', 300, 120, 120, 'manual');
+    expect(gpsScore).toBeGreaterThan(manualScore);
   });
 });
