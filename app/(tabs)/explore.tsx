@@ -8,7 +8,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { Colors, Spacing, Radius, FontSize } from '@/constants/colors';
-import { getCollection, orderByClause, ViaFerrata } from '@/lib/firestore';
+import { getCollection, orderByClause, ViaFerrata, Ascent, whereClause } from '@/lib/firestore';
+import { useAuth } from '@/contexts/AuthContext';
 import FerrataCard from '@/components/FerrataCard';
 import HookedLogo from '@/components/HookedLogo';
 import { haversineKm } from '@/lib/utils';
@@ -19,6 +20,7 @@ const DIFFICULTIES = ['A', 'A/B', 'B', 'B/C', 'C', 'C/D', 'D', 'E', 'E/F', 'F'];
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
   const [ferrate, setFerate] = useState<(ViaFerrata & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [loaded, setLoaded] = useState(false);
@@ -31,6 +33,8 @@ export default function ExploreScreen() {
   const [nearby, setNearby] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
+  const [completedFerrataIds, setCompletedFerrataIds] = useState<Set<string>>(new Set());
+  const [completionFilter, setCompletionFilter] = useState<'all' | 'completed' | 'uncompleted'>('all');
 
   const toggleNearby = async () => {
     if (nearby) { setNearby(false); setUserCoords(null); return; }
@@ -61,13 +65,29 @@ export default function ExploreScreen() {
     }
   }, [loaded]);
 
+  // Load user's completed ferrate IDs
+  const loadCompleted = useCallback(async () => {
+    if (!user) return;
+    try {
+      const ascents = await getCollection<Ascent>('ascents', [
+        whereClause('userId', '==', user.uid),
+      ]);
+      const ids = new Set(ascents.map((a) => a.ferrataId).filter(Boolean));
+      setCompletedFerrataIds(ids);
+    } catch (e) {
+      console.error('Failed to load completed ferrate:', e);
+    }
+  }, [user]);
+
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadCompleted(); }, [loadCompleted]);
 
   const isFiltering =
     search.trim() !== '' ||
     selectedDifficulties.length > 0 ||
     maxLength !== null ||
-    maxDuration !== null;
+    maxDuration !== null ||
+    completionFilter !== 'all';
 
   // Top 5 by rating
   const topRated = [...ferrate]
@@ -92,6 +112,9 @@ export default function ExploreScreen() {
       const dist = haversineKm(userCoords.lat, userCoords.lon, f.latitude, f.longitude);
       if (dist > 10) return false;
     }
+    // Completion filter
+    if (completionFilter === 'completed' && !completedFerrataIds.has(f.id)) return false;
+    if (completionFilter === 'uncompleted' && completedFerrataIds.has(f.id)) return false;
     return true;
   });
 
@@ -104,6 +127,7 @@ export default function ExploreScreen() {
   const onRefresh = () => {
     setRefreshing(true);
     load(true);
+    loadCompleted();
   };
 
   return (
@@ -263,6 +287,33 @@ export default function ExploreScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {/* Completion filter */}
+            <View style={styles.advancedRow}>
+              <Text style={styles.advancedLabel}>Status</Text>
+              <View style={styles.advancedInputRow}>
+                {([
+                  { key: 'all', label: 'Sve' },
+                  { key: 'completed', label: 'Pređene' },
+                  { key: 'uncompleted', label: 'Nepređene' },
+                ] as const).map((opt) => (
+                  <TouchableOpacity
+                    key={opt.key}
+                    style={[styles.advancedChip, completionFilter === opt.key && styles.advancedChipActive]}
+                    onPress={() => setCompletionFilter(completionFilter === opt.key ? 'all' : opt.key)}
+                  >
+                    <Text
+                      style={[
+                        styles.advancedChipText,
+                        completionFilter === opt.key && styles.advancedChipTextActive,
+                      ]}
+                    >
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </View>
 
           <View style={styles.divider} />
@@ -289,7 +340,7 @@ export default function ExploreScreen() {
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <FerrataCard ferrata={item} />}
+          renderItem={({ item }) => <FerrataCard ferrata={item} completed={completedFerrataIds.has(item.id)} />}
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
           ListHeaderComponent={
@@ -306,7 +357,7 @@ export default function ExploreScreen() {
                 >
                   {topRated.map((f) => (
                     <View key={f.id} style={styles.topItem}>
-                      <FerrataCard ferrata={f} compact />
+                      <FerrataCard ferrata={f} compact completed={completedFerrataIds.has(f.id)} />
                     </View>
                   ))}
                 </ScrollView>

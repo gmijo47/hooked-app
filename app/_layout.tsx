@@ -1,10 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { Colors } from '@/constants/colors';
+
+// Prevent native splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootGuard() {
   const { user, profile, loading } = useAuth();
@@ -12,6 +16,11 @@ function RootGuard() {
   const router = useRouter();
   const navState = useRootNavigationState();
   const navigating = useRef(false);
+
+  const onReady = useCallback(async () => {
+    // Hide native splash once navigation is ready
+    await SplashScreen.hideAsync();
+  }, []);
 
   useEffect(() => {
     if (loading || !navState?.key || navigating.current) return;
@@ -34,6 +43,9 @@ function RootGuard() {
         router.replace('/(tabs)');
       }
     }
+
+    // Hide splash once routing decision is made
+    onReady();
   }, [user, profile, loading, segments, navState?.key]);
 
   // Reset navigating flag when segments change (navigation completed)

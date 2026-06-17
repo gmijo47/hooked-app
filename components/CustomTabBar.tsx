@@ -13,11 +13,11 @@ type TabDef = {
 };
 
 const TABS: TabDef[] = [
-  { name: 'index',    label: 'Početna',  icon: 'home',                   route: '/'         },
-  { name: 'map',      label: 'Mapa',     icon: 'map-outline',             route: '/map'      },
-  { name: 'activity', label: 'Aktivnost',icon: 'lightning-bolt',          route: '/activity', center: true },
-  { name: 'explore',  label: 'Istraži',  icon: 'compass-outline',         route: '/explore'  },
-  { name: 'profile',  label: 'Profil',   icon: 'account-circle-outline',  route: '/profile'  },
+  { name: 'index',       label: 'Početna',   icon: 'home',                   route: '/'            },
+  { name: 'map',         label: 'Mapa',      icon: 'map-outline',             route: '/map'         },
+  { name: 'activity',    label: 'Aktivnost', icon: 'lightning-bolt',          route: '/activity',    center: true },
+  { name: 'explore',     label: 'Istraži',   icon: 'compass-outline',         route: '/explore'     },
+  { name: 'profile',     label: 'Profil',    icon: 'account-circle-outline',  route: '/profile'     },
 ];
 
 export default function CustomTabBar() {

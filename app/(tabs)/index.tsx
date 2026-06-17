@@ -74,7 +74,7 @@ export default function HomeScreen() {
           { icon: 'compass' as const, label: 'Istrazuj', sub: 'Sve ferate', route: '/(tabs)/explore' },
           { icon: 'map' as const, label: 'Mapa', sub: 'Lokacije', route: '/(tabs)/map' },
           { icon: 'lightning-bolt' as const, label: 'Aktivnosti', sub: 'Tvoji usponi', route: '/(tabs)/activity' },
-          { icon: 'account' as const, label: 'Profil', sub: 'Podesavanja', route: '/(tabs)/profile' },
+          { icon: 'trophy' as const, label: 'Rang lista', sub: 'Leaderboard', route: '/(tabs)/leaderboard' },
         ].map((item, i) => (
           <TouchableOpacity key={i} style={styles.quickLink} onPress={() => router.push(item.route as any)} activeOpacity={0.8}>
             <View style={styles.quickIcon}>
