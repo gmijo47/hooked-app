@@ -7,8 +7,31 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D0D0D"
+    },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0D0D0D",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Dozvoli Hooked-u pristup lokaciji za GPS snimanje rute.",
+          "locationAlwaysPermission": "Dozvoli Hooked-u pristup lokaciji u pozadini za kontinuirano snimanje ferate.",
+          "locationWhenInUsePermission": "Dozvoli Hooked-u pristup lokaciji dok koristiš aplikaciju.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      "expo-task-manager"
     ],
     "experiments": {
       "typedRoutes": true

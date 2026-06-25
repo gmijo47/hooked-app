@@ -2,9 +2,9 @@
 
 ## Ručni (manuelni) testovi — Kompletan test plan
 
-**Verzija:** 1.0.0  
-**Datum:** 16.06.2026.  
-**Tim:** Mijo Galic (razvoj), Tonka Cepo (testiranje)  
+**Verzija:** 1.0.0 — Sprint 4  
+**Datum:** 17.06.2026.  
+**Tim:** Mijo Galić (razvoj), Tonka Čepo (testiranje)  
 **Okruženje:** Android (primarno), iOS, Web
 
 ---
@@ -23,6 +23,12 @@
 10. [Favoriti](#10-favoriti)
 11. [GPS funkcionalnosti](#11-gps-funkcionalnosti)
 12. [Regresioni testovi](#12-regresioni-testovi)
+13. [🆕 Sprint 4 — GPS Track Recording](#13-sprint-4--gps-track-recording)
+14. [🆕 Sprint 4 — Novo bodovanje](#14-sprint-4--novo-bodovanje-scoring)
+15. [🆕 Sprint 4 — Leaderboard](#15-sprint-4--leaderboard)
+16. [🆕 Sprint 4 — Indikatori pređenih ferata](#16-sprint-4--indikatori-pređenih-ferata)
+17. [🆕 Sprint 4 — Splash Screen](#17-sprint-4--splash-screen)
+18. [🆕 Sprint 4 — Regresioni testovi](#18-sprint-4--regresioni-testovi-cijeli-flow)
 
 ---
 
@@ -321,7 +327,157 @@
 
 ---
 
-## Napomene za testiranje
+## 13. Sprint 4 — GPS Track Recording
+
+### 13.1 Track pokretanje i zaustavljanje
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-TRK-01 | "Pokreni Track" vidljiv za feratu sa koordinatama | Odaberi feratu koja ima `startLat/startLon/endLat/endLon` | Prikazuje se "GPS Snimanje rute" kartica sa "Pokreni Track" gumbom. | |
+| T-TRK-02 | "Pokreni Track" onemogućen za feratu bez koordinata | Odaberi feratu bez koordinata | Prikazuje se info banner: "Ferata nema definirane koordinate." Gumb se ne prikazuje. | |
+| T-TRK-03 | Start track — unutar 200m | Budi unutar 200m od početka ferate → "Pokreni Track" | Track se pokreće, prikazuje se live crvena točkica, timer, broj točaka, udaljenost do kraja. | |
+| T-TRK-04 | Start track — izvan 200m | Budi dalje od 200m → "Pokreni Track" | Alert: "Moraš biti bliže početku ferate (min. 200m). Udaljen si Xm." | |
+| T-TRK-05 | GPS dozvola odbijena pri startu | Odbij GPS dozvolu → "Pokreni Track" | Alert: "GPS dozvola nije odobrena." | |
+| T-TRK-06 | Stop track — unutar 200m od kraja | Tokom tracka, priđi kraju ferate → "Završi Track" | Track se zaustavlja, datum i vrijeme se auto-popunjavaju, aktivnost se automatski sprema. | |
+| T-TRK-07 | Stop track — izvan 200m od kraja | Daleko od kraja → "Završi Track" | Alert: "Moraš biti bliže kraju ferate (min. 200m)." Track se ne zaustavlja. | |
+| T-TRK-08 | Pauziraj track | Klikni "Pauziraj" tokom aktivnog tracka | Track pauziran, live dot postaje žut, gumb se mijenja u "Nastavi". | |
+| T-TRK-09 | Nastavi track | Klikni "Nastavi" nakon pauze | Track se nastavlja, live dot ponovo crven. | |
+| T-TRK-10 | Odustani od tracka | Klikni "Odustani od snimanja" | Alert potvrda → track se poništava, GPS točke se brišu. | |
+| T-TRK-11 | Otkaži odustajanje | Alert potvrda → "Ne" | Track se nastavlja normalno. | |
+
+### 13.2 GPS signal lost / auto-pauza
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-TRK-12 | Gubitak GPS signala > 30s | Uđi u tunel/zgradu tokom tracka | Nakon 30s bez signala: track auto-pauziran, žuti banner "GPS signal izgubljen. Track pauziran." | |
+| T-TRK-13 | Povratak GPS signala | Izađi iz tunela | Signal se vraća, banner nestaje, ali track ostaje pauziran (korisnik mora ručno "Nastavi"). | |
+| T-TRK-14 | Track u pozadini (minimizirana app) | Pokreni track → minimiziraj app → vrati se nakon 1 min | Track i dalje aktivan, točke se snimaju, timer ažuriran. | |
+
+### 13.3 Pohrana track podataka
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-TRK-15 | Track sačuvan u Firestore | Završi track → provjeri Firestore `ascents/{id}` | Dokument sadrži: `track: [...]` (niz GPS točaka), `completionType: "gps"`, `elapsedTimeMin: XX`, `score: XX`. | |
+| T-TRK-16 | Svaka GPS točka ispravna | Provjeri niz `track` u Firestore | Svaka točka sadrži: `{lat, lon, alt, ts}`. `ts` je Firebase Timestamp. | |
+| T-TRK-17 | Elapsed time iz tracka | Usporedi `elapsedTimeMin` sa stvarnim vremenom | Odgovara trajanju tracka (minus pauze). | |
+
+### 13.4 Track UI prikaz
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-TRK-18 | Timer prikaz | Tokom tracka, prati timer | Vrijeme u formatu `M:SS` ili `Hh MMm`, ažurira se svake sekunde. | |
+| T-TRK-19 | Brojač točaka | Tokom tracka | Broj snimljenih točaka raste (svakih 5s nova točka). | |
+| T-TRK-20 | Udaljenost do kraja | Tokom tracka | Prikazuje udaljenost u metrima ili km do `endLat/endLon`. | |
+| T-TRK-21 | Datum i trajanje onemogućeni | Tokom tracka | Polja datum i trajanje su `editable={false}`. | |
+| T-TRK-22 | "Spremi aktivnost" skriven | Tokom tracka | Gumb za spremanje se ne prikazuje (sprema se automatski na kraju tracka). | |
+
+---
+
+## 14. Sprint 4 — Novo bodovanje (Scoring)
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-SCORE-S4-01 | Score sa GPS trackom > ručni unos | Zabilježi istu feratu GPS-om pa ručno | GPS score ≈ 2× ručni score (completionBonus 1.0 vs 0.5). | |
+| T-SCORE-S4-02 | Score minimum 1 | Najlakša ferata (A), 0m visine, sporo vrijeme | Score >= 1. | |
+| T-SCORE-S4-03 | Score prikaz na ActivityCard | Pogledaj Activity listu nakon dodavanja | Svaka ActivityCard prikazuje score u narančastom badge-u pored imena ferate. | |
+| T-SCORE-S4-04 | GPS ikona na ActivityCard | ActivityCard za GPS track ascent | Prikazuje se `crosshairs-gps` ikona (zelena) pored score-a. | |
+| T-SCORE-S4-05 | Score preview pri ručnom unosu | Odaberi feratu na add screenu (bez tracka) | Prikazuje se "Okvirni score: ~X (×2 sa GPS trackom)". | |
+| T-SCORE-S4-06 | Score na profilu | Otvori profil → statistika | Prikazuje ukupni score (suma svih ascent score-ova). | |
+
+---
+
+## 15. Sprint 4 — Leaderboard
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-LB-01 | Leaderboard tab | Klikni "Rang" u tab bar-u | Otvara se leaderboard ekran sa naslovom "Leaderboard" i "Top 50 penjača". | |
+| T-LB-02 | Lista korisnika sortirana po score-u | Pogledaj leaderboard | Korisnici sortirani od najvišeg ka najnižem score-u. | |
+| T-LB-03 | Top 3 — trofeji | Pogledaj prva 3 mjesta | #1 zlatni trofej, #2 srebrni, #3 brončani. | |
+| T-LB-04 | Rang prikaz | #4 i niže | Prikazuje `#4`, `#5` itd. | |
+| T-LB-05 | Avatar sa inicijalima | Svaki red | Prikazuje inicijale korisnika u krugu. | |
+| T-LB-06 | Score i broj ferata | Svaki red | Prikazuje ukupni score i "X ferata". | |
+| T-LB-07 | Vlastiti red označen | Pronađi svoj red | Narandžasti border i pozadina, "Ti" umjesto imena. | |
+| T-LB-08 | Vlastiti plasman uvijek vidljiv | Ako nisi u top 50 | Na dnu liste: divider + "Tvoj plasman" + tvoj red. | |
+| T-LB-09 | Filter "Ovog tjedna" | Klikni "Ovog tjedna" | Chip postaje narančast, prikazuje rezultate za ovaj tjedan. | |
+| T-LB-10 | Filter "Ovog mjeseca" | Klikni "Ovog mjeseca" | Prikazuje mjesečne rezultate. | |
+| T-LB-11 | Filter "Sve vrijeme" | Klikni "Sve vrijeme" | Vraća na ukupni poredak. | |
+| T-LB-12 | Prazan leaderboard | Novi korisnik, niko nema aktivnosti | Poruka: "Još nema rezultata. Budi prvi/a!" | |
+| T-LB-13 | Pull-to-refresh | Povuci leaderboard listu nadole | Osvježava podatke. | |
+| T-LB-15 | Leaderboard dostupan sa početne | Otvori Početna → klikni "Rang lista" quick link | Otvara se leaderboard ekran. | |
+
+---
+
+## 16. Sprint 4 — Indikatori pređenih ferata
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-COMP-01 | Zelena kvačica na pređenoj ferati | Otvori Explore → ferata koju si već popeo/la | Na FerrataCard se prikazuje zelena kvačica (`check-circle`). | |
+| T-COMP-02 | Bez kvačice na nepređenoj | Pogledaj nepređenu feratu | Nema kvačice. | |
+| T-COMP-03 | Filter "Pređene" | Napredni filteri → "Pređene" | Prikazuju se samo ferate sa kvačicom. | |
+| T-COMP-04 | Filter "Nepređene" | Napredni filteri → "Nepređene" | Prikazuju se samo ferate bez kvačice. | |
+| T-COMP-05 | Filter "Sve" | Vrati na "Sve" | Prikazuju se sve ferate. | |
+| T-COMP-06 | Kvačica i na top 5 slideru | Pogledaj top 5 horizontalni slider | Pređene ferate u slideru također imaju kvačicu. | |
+| T-COMP-07 | Progress bar na profilu | Otvori profil → statistika | "Pređene ferate: X/23" + progress bar (narandžasti) + postotak. | |
+| T-COMP-08 | Lista nedavnih aktivnosti na profilu | Profil → "Nedavne aktivnosti" | Lista zadnjih 5 ascenta sa imenom ferate, datumom, score-om. Klik vodi na detalje ferate. | |
+| T-COMP-09 | Cache pređenih ferata | Refresh Explore → dodaj novu aktivnost → vrati se na Explore | Kvačica se ažurira tek nakon pull-to-refresh ili ponovnog ulaska. | |
+
+---
+
+## 17. Sprint 4 — Splash Screen
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-SPL-01 | Splash screen pri pokretanju | Potpuno ugasi app → ponovo pokreni | Crna pozadina (#0D0D0D), Hooked logo u centru. | |
+| T-SPL-02 | Trajanje splasha | Pokreni app | Splash traje dok se auth stanje ne riješi (1-3s). | |
+| T-SPL-03 | Glatki prelaz na auth | Nakon splasha, ako nisi prijavljen | Fade-out splash → Login ekran. | |
+| T-SPL-04 | Glatki prelaz na main | Nakon splasha, ako si prijavljen | Fade-out splash → Početna stranica (tabs). | |
+| T-SPL-05 | Nema bijelog fleša | Pokreni app više puta | Nikad se ne prikazuje bijeli ekran. Samo crna → content. | |
+| T-SPL-06 | Firebase Auth inicijalizacija u pozadini | Dok traje splash | `onAuthStateChanged` se izvršava, auth stanje određeno prije nego splash nestane. | |
+
+---
+
+## 18. Sprint 4 — Regresioni testovi (cijeli flow)
+
+### 18.1 Full GPS track flow
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-REG-S4-01 | Full GPS track flow | 1. Login<br>2. Otvori Explore → pronađi feratu sa koordinatama u blizini<br>3. Otvori "Dodaj aktivnost"<br>4. Odaberi feratu<br>5. "Pokreni Track" (moraš biti blizu)<br>6. Prođi feratu (sačekaj nekoliko minuta)<br>7. "Završi Track" blizu kraja<br>8. Provjeri score na ActivityCard<br>9. Provjeri leaderboard<br>10. Provjeri zelenu kvačicu na Explore<br>11. Provjeri progress bar i score na profilu | Sve komponente rade bez greške. Score ispravan. Kvačica prisutna. Leaderboard ažuriran. | |
+
+### 18.2 Ručni unos (regresija)
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-REG-S4-02 | Ručni unos više ne postoji | Otvori "Dodaj aktivnost" → odaberi feratu bez koordinata | Prikazuje se crveni banner: "GPS track nije dostupan". Nema ručnog spašavanja. | |
+
+### 18.3 Postojeće funkcionalnosti (regresija)
+
+| # | Scenarij | Koraci | Očekivani rezultat | Status |
+|---|----------|--------|--------------------|--------|
+| T-REG-S4-03 | Explore radi normalno | Otvori Explore | Lista ferata, pretraga, filteri, top 5 — sve radi. | |
+| T-REG-S4-04 | Mapa radi normalno | Otvori Mapu | Markeri vidljivi, info prozori rade. | |
+| T-REG-S4-05 | Recenzije rade normalno | Otvori detalje → Recenzije | Dodavanje, edit, brisanje — sve radi. | |
+| T-REG-S4-06 | Favoriti rade normalno | Srce na detaljima | Toggle favorita radi. | |
+| T-REG-S4-07 | Profil radi normalno | Otvori Profil | Svi podaci prisutni, edit radi. | |
+| T-REG-S4-08 | Auth i dalje radi | Odjavi se → Prijavi se ponovo | Login/Register/Onboarding rade. | |
+| T-REG-S4-09 | Nema memory leak-ova od GPS trackera | Pokreni track → minimiziraj → vrati se → završi track → odjavi se | Nema `setState on unmounted` warninga. App stabilna. | |
+| T-REG-S4-10 | Tab bar sa 5 tabova | Provjeri bottom tab bar | 5 tabova: Početna, Mapa, Aktivnost, Istraži, Profil. Leaderboard dostupan sa početne. | |
+
+---
+
+## Napomene za testiranje Sprinta 4
+
+1. **GPS Track testovi:** Zahtijevaju fizički Android uređaj sa GPS-om ILI Android emulator sa mock GPS lokacijom. Preporučuje se testiranje na otvorenom prostoru.
+2. **Proximity provjera:** 200m prag za start/end tracka. Na emulatoru koristiti `geo fix` komandu za postavljanje koordinata.
+3. **Ferate sa koordinatama:** Samo ferate koje imaju `startLat`, `startLon`, `endLat`, `endLon` podržavaju GPS track. Provjeriti u Firestore-u.
+4. **Leaderboard:** Potrebno je više korisnika sa aktivnostima za puni test. Testirati bar 2 različita accounta.
+5. **Splash screen:** Testirati na fizičkom uređaju — emulator može preskočiti splash zbog brzine učitavanja.
+6. **Score formula:** Provjeriti kalkulaciju sa primjerima:
+   - C, 350m visine, 150min/180min, GPS → score 15
+   - Ista, ručno → score 8
+   - F, 500m visine, 200min/240min, GPS → score 70
+7. **expo-splash-screen:** Verzija 0.27+ zahtijeva `expo-splash-screen` plugin u `app.json`. Provjeriti da je plugin ispravno konfigurisan.
+8. **expo-task-manager:** Koristi se za background location. Na iOS-u zahtijeva dodatne dozvole u `Info.plist`.
 
 1. **Testno okruzenje:** Preporucuje se testiranje na fizickom Android uredjaju (za GPS testove) i Android emulatoru (Pixel 6 API 34+).
 2. **Firestore:** Sve testove koji ukljucuju pisanje izvoditi na development Firestore instanci, ne na production.
@@ -346,6 +502,14 @@
 | Profil | 12 |
 | Recenzije | 17 |
 | Favoriti | 6 |
-| GPS | 9 |
-| Regresija | 7 |
-| **UKUPNO** | **143** |
+| GPS (stari) | 9 |
+| Regresija (stari) | 7 |
+| **Sprint 4 — GPS Track** | **22** |
+| **Sprint 4 — Scoring** | **6** |
+| **Sprint 4 — Leaderboard** | **14** |
+| **Sprint 4 — Indikatori** | **9** |
+| **Sprint 4 — Splash Screen** | **6** |
+| **Sprint 4 — Regresija** | **10** |
+| **UKUPNO** | **210** |
+
+-

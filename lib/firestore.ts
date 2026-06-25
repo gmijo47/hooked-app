@@ -21,6 +21,13 @@ import { db } from './firebase';
 
 // ─── Tipovi ───────────────────────────────────────────────────────────────────
 
+export interface TrackPoint {
+  lat: number;
+  lon: number;
+  alt: number | null;
+  ts: Timestamp;
+}
+
 export interface ViaFerrata {
   id?: string;
   name: string;
@@ -35,6 +42,10 @@ export interface ViaFerrata {
   accessInfo?: string;
   latitude?: number;
   longitude?: number;
+  startLat?: number;
+  startLon?: number;
+  endLat?: number;
+  endLon?: number;
   startPoint?: string;
   imageUrl?: string;
   gallery?: string[];
@@ -64,6 +75,11 @@ export interface Ascent {
   difficultyRating?: number; // 1–5
   notes?: string;
   photos?: string[];
+  // Sprint 4 — GPS track recording
+  track?: TrackPoint[];
+  completionType?: 'gps' | 'manual';
+  elapsedTimeMin?: number;
+  score?: number;
   createdAt: Timestamp;
 }
 

@@ -55,25 +55,30 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [ascentCount, setAscentCount] = useState(0);
   const [favCount, setFavCount] = useState(0);
-  const [totalLength, setTotalLength] = useState(0);
+  const [totalScore, setTotalScore] = useState(0);
+  const [totalFerate, setTotalFerate] = useState(23); // total ferrate in DB
+  const [recentAscents, setRecentAscents] = useState<(Ascent & { id: string })[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       try {
-        const [ascents, favs] = await Promise.all([
+        const [ascents, favs, allFerate] = await Promise.all([
           getCollection<Ascent>('ascents', [
             whereClause('userId', '==', user.uid),
+            orderByClause('createdAt', 'desc'),
           ]),
           getCollection<Favorite>('favorites', [
             whereClause('userId', '==', user.uid),
           ]),
+          getCollection('via_ferrata', []),
         ]);
         setAscentCount(ascents.length);
         setFavCount(favs.length);
-        // Estimate total elevation from ascents (just count for now)
-        setTotalLength(ascents.length);
+        setTotalScore(ascents.reduce((sum, a) => sum + (a.score || 0), 0));
+        setTotalFerate(allFerate.length);
+        setRecentAscents(ascents.slice(0, 5));
       } catch (e) {
         console.error('Failed to load stats:', e);
       } finally {
@@ -125,33 +130,84 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Stats card — moved to top */}
+      {/* Stats card */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Tvoja statistika</Text>
         {statsLoading ? (
           <Text style={{ color: Colors.textMuted, fontSize: FontSize.sm }}>Učitavanje...</Text>
         ) : (
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons name="lightning-bolt" size={24} color={Colors.orange} />
-              <Text style={styles.statNumber}>{ascentCount}</Text>
-              <Text style={styles.statLabel}>Uspona</Text>
+          <>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <MaterialCommunityIcons name="lightning-bolt" size={24} color={Colors.orange} />
+                <Text style={styles.statNumber}>{ascentCount}</Text>
+                <Text style={styles.statLabel}>Uspona</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <MaterialCommunityIcons name="heart" size={24} color="#FF4444" />
+                <Text style={styles.statNumber}>{favCount}</Text>
+                <Text style={styles.statLabel}>Favorita</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <MaterialCommunityIcons name="trophy" size={24} color="#FFD700" />
+                <Text style={styles.statNumber}>{totalScore}</Text>
+                <Text style={styles.statLabel}>Bodova</Text>
+              </View>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons name="heart" size={24} color="#FF4444" />
-              <Text style={styles.statNumber}>{favCount}</Text>
-              <Text style={styles.statLabel}>Favorita</Text>
+
+            {/* Completion progress */}
+            <View style={styles.progressSection}>
+              <View style={styles.progressHeader}>
+                <Text style={styles.progressLabel}>
+                  Pređene ferate: {ascentCount}/{totalFerate}
+                </Text>
+                <Text style={styles.progressPct}>
+                  {totalFerate > 0 ? Math.round((ascentCount / totalFerate) * 100) : 0}%
+                </Text>
+              </View>
+              <View style={styles.progressBar}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${totalFerate > 0 ? Math.min(100, (ascentCount / totalFerate) * 100) : 0}%` as any },
+                  ]}
+                />
+              </View>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <MaterialCommunityIcons name="trophy" size={24} color="#FFD700" />
-              <Text style={styles.statNumber}>{totalLength}</Text>
-              <Text style={styles.statLabel}>Zabilježenih</Text>
-            </View>
-          </View>
+          </>
         )}
       </View>
+
+      {/* Recent ascents with scores */}
+      {recentAscents.length > 0 && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Nedavne aktivnosti</Text>
+          {recentAscents.map((a) => (
+            <TouchableOpacity
+              key={a.id}
+              style={styles.recentItem}
+              onPress={() => router.push(`/(tabs)/explore/${a.ferrataId}` as any)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.recentLeft}>
+                <Text style={styles.recentName} numberOfLines={1}>
+                  {a.ferrataName || 'Nepoznata staza'}
+                </Text>
+                <Text style={styles.recentDate}>{a.date}</Text>
+              </View>
+              <View style={styles.recentScore}>
+                <MaterialCommunityIcons name="star" size={14} color="#FFD700" />
+                <Text style={styles.recentScoreText}>{a.score || 0}</Text>
+                {a.completionType === 'gps' && (
+                  <MaterialCommunityIcons name="crosshairs-gps" size={12} color={Colors.success} />
+                )}
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Info card */}
       <View style={styles.card}>
@@ -281,6 +337,70 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  progressSection: {
+    marginTop: Spacing.md,
+    gap: 6,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.cardBorder,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressLabel: {
+    fontSize: FontSize.xs,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+  },
+  progressPct: {
+    fontSize: FontSize.sm,
+    fontWeight: '800',
+    color: Colors.orange,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: Colors.orange,
+    borderRadius: Radius.full,
+  },
+  recentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.cardBorder,
+    gap: Spacing.md,
+  },
+  recentLeft: {
+    flex: 1,
+    gap: 2,
+  },
+  recentName: {
+    fontSize: FontSize.sm,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  recentDate: {
+    fontSize: FontSize.xs,
+    color: Colors.textMuted,
+  },
+  recentScore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  recentScoreText: {
+    fontSize: FontSize.md,
+    fontWeight: '800',
+    color: Colors.text,
   },
   editBtn: {
     flexDirection: 'row',

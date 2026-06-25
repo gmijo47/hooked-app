@@ -23,9 +23,20 @@ export default function ActivityCard({ ascent, onPress }: Props) {
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.ferrataName} numberOfLines={1}>
-          {ascent.ferrataName || 'Nepoznata staza'}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.ferrataName} numberOfLines={1}>
+            {ascent.ferrataName || 'Nepoznata staza'}
+          </Text>
+          {ascent.score != null && (
+            <View style={styles.scoreBadge}>
+              <MaterialCommunityIcons name="star" size={12} color="#FFD700" />
+              <Text style={styles.scoreText}>{ascent.score}</Text>
+            </View>
+          )}
+          {ascent.completionType === 'gps' && (
+            <MaterialCommunityIcons name="crosshairs-gps" size={14} color={Colors.success} />
+          )}
+        </View>
 
         <View style={styles.meta}>
           <View style={styles.metaItem}>
@@ -84,10 +95,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { flex: 1, gap: 4 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   ferrataName: {
     fontSize: FontSize.md,
     fontWeight: '700',
     color: Colors.text,
+    flex: 1,
+  },
+  scoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: Colors.orangeMuted,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Radius.sm,
+  },
+  scoreText: {
+    fontSize: FontSize.xs,
+    fontWeight: '800',
+    color: Colors.orange,
   },
   meta: { flexDirection: 'row', gap: Spacing.md },
   metaItem: {

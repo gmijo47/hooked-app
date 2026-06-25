@@ -21,9 +21,10 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 type Props = {
   ferrata: ViaFerrata & { id: string };
   compact?: boolean;
+  completed?: boolean;
 };
 
-export default function FerrataCard({ ferrata, compact }: Props) {
+export default function FerrataCard({ ferrata, compact, completed }: Props) {
   const router = useRouter();
   const diffColor = DIFFICULTY_COLORS[ferrata.difficulty] ?? Colors.textMuted;
 
@@ -46,6 +47,11 @@ export default function FerrataCard({ ferrata, compact }: Props) {
           <View style={[styles.compactDiff, { backgroundColor: diffColor }]}>
             <Text style={styles.compactDiffText}>{ferrata.difficulty}</Text>
           </View>
+          {completed && (
+            <View style={styles.completedBadge}>
+              <MaterialCommunityIcons name="check-circle" size={16} color={Colors.success} />
+            </View>
+          )}
         </View>
         <View style={styles.compactBody}>
           <Text style={styles.compactName} numberOfLines={1}>{ferrata.name}</Text>
@@ -94,6 +100,13 @@ export default function FerrataCard({ ferrata, compact }: Props) {
       <View style={[styles.diffBadge, { backgroundColor: diffColor }]}>
         <Text style={styles.diffText}>{ferrata.difficulty}</Text>
       </View>
+
+      {/* Completed badge */}
+      {completed && (
+        <View style={styles.completedBadgeFull}>
+          <MaterialCommunityIcons name="check-circle" size={18} color={Colors.success} />
+        </View>
+      )}
 
       {/* Content */}
       <View style={styles.body}>
@@ -315,5 +328,23 @@ const styles = StyleSheet.create({
   compactDot: {
     fontSize: 11,
     color: Colors.textMuted,
+  },
+
+  // Completed badge
+  completedBadge: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+  },
+  completedBadgeFull: {
+    position: 'absolute',
+    top: Spacing.sm,
+    left: 68,
+    backgroundColor: 'rgba(76,175,80,0.9)',
+    borderRadius: Radius.sm,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
